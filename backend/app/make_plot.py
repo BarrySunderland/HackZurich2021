@@ -18,7 +18,7 @@ def make_dummy_plot():
     # following above points: 
     #  + pass plot object 'p' into json_item
     #  + wrap the result in json.dumps and return to frontend
-    return json.dumps(json_item(p, "myplot"))
+    return json_item(p, "myplot")
 
 
 
