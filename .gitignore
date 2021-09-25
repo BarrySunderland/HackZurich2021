@@ -1,4 +1,4 @@
-data-processing/data/
+**/*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -130,6 +130,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+data/location.csv
+data/model/lgb_model_d*.txt
 
 #custom 
 frontend/node_modules

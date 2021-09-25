@@ -1,5 +1,5 @@
 import pandas as pd
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response
 from flask_cors import CORS
 from csv_to_geojson_converter import convert_csv_to_geojson
 import json
@@ -123,9 +123,10 @@ def plot_sensor():
 @app.route('/plot/dummy')
 def plot_dummy():
 
-    plot_json = make_dummy_plot()
+	plot_json = make_dummy_plot()
 
-    return plot_json
+    # return Response(plot_json, content_type='application/json')
+	return jsonify(results=plot_json)
 
 
 if __name__ == '__main__':
