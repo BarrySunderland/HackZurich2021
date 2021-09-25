@@ -5,7 +5,7 @@ DEBUG=True
 
 @app.route('/')
 def hello():
-	return "<h1>Simens  - Track Bugscreen!</h1>"
+	return "<h1>Siemens  - Track Bugscreen</h1>"
 
 @app.route('/failures')
 def failure_summary():
