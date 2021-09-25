@@ -6,6 +6,7 @@ app = Flask(__name__)
 DEBUG=True
 
 SHOW_FAILURES = True
+SHOW_HORIZON = True
 HOST="localhost"
 PORT="5000"
 PROTOCOL="http"
@@ -15,12 +16,16 @@ PROTOCOL="http"
 ROUTES = [	"/",
 			"/api",
 			"/api/failures",
+			"/api/horizon"
 			]
 
 ENDPOINTS = [f"{PROTOCOL}://{HOST}:{PORT}{route}" for route in ROUTES] 
 if DEBUG:
 	print(ENDPOINTS)
 
+def get_horizon():
+	"""return a list of predicted failure points in the next seven days"""
+	pass
 
 def get_failures():
 	"""return a list dictionaries with failure details"""	
@@ -63,6 +68,14 @@ def api_root():
 	
 	return render_endpoint_list()
 
+@app.route('/api/horizon')
+def horizon_summary():
+	horizon_summary = get_horizon()
+
+	if horizon_summary:
+		return jsonify(results=horizon_summary)
+	else:
+		return {"msg":"oracle not available"}
 
 
 @app.route('/api/failures')
