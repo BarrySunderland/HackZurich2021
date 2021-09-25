@@ -1,6 +1,9 @@
 import pandas as pd
 from flask import Flask, jsonify
 import json
+from make_plot import make_sensor_plot, make_dummy_plot
+
+
 app = Flask(__name__)
 
 DEBUG=True
@@ -15,6 +18,8 @@ PROTOCOL="http"
 ROUTES = [	"/",
 			"/api",
 			"/api/failures",
+			"/plot/sensor",
+			"/plot/dummy"
 			]
 
 ENDPOINTS = [f"{PROTOCOL}://{HOST}:{PORT}{route}" for route in ROUTES] 
@@ -74,6 +79,21 @@ def failure_summary():
 		return jsonify(results=failures_json)
 	else:
 		return {"msg":"no failures"}
+
+@app.route('/plot/sensor')
+def plot_sensor():
+
+	plot_json = make_sensor_plot()
+
+	return plot_json
+
+
+@app.route('/plot/dummy')
+def plot_dummy():
+
+	plot_json = make_dummy_plot()
+
+	return plot_json
 
 
 if __name__ == '__main__':
