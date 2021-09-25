@@ -3,6 +3,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from csv_to_geojson_converter import convert_csv_to_geojson
 import json
+from make_plot import make_sensor_plot, make_dummy_plot
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -23,6 +24,8 @@ MODEL_CSV = "./data/aneesh.csv"
 ROUTES = [	"/",
 			"/api",
 			"/api/failures",
+			"/plot/sensor",
+			"/plot/dummy"
 			"/api/horizon"
 			]
 
@@ -109,6 +112,21 @@ def failure_summary():
 		return jsonify(results=failures_json)
 	else:
 		return {"msg":"no failures"}
+
+@app.route('/plot/sensor')
+def plot_sensor():
+
+	plot_json = make_sensor_plot()
+
+	return plot_json
+
+
+@app.route('/plot/dummy')
+def plot_dummy():
+
+	plot_json = make_dummy_plot()
+
+	return plot_json
 
 
 if __name__ == '__main__':
