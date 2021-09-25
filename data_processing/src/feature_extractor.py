@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import tqdm
 import datetime
 import numpy as np
-
 class DataGenerator:
+    """Generates sample for training and evaluating the model.
+    """
     
     def __init__(self,disruptions_df, rssi_comp_df, features):
         self.disruptions_df = disruptions_df
@@ -32,7 +33,6 @@ class DataGenerator:
         # replacing NANs because of the missing data(weekend) with average of the entire window.
         features_matrix = np.where(np.isnan(features_matrix), np.ma.array(features_matrix, mask=np.isnan(features_matrix)).mean(axis=0), features_matrix)
         return features_matrix 
-
     
     def generate_samples(self,num_samples:int, prediction_days:int, history:int):
         """
