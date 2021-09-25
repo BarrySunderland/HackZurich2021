@@ -36,7 +36,7 @@ def line_to_dict_format(row: list):
     return json_dict
 
 
-def convert_csv_to_json(path_to_csv_file='aneesh_data.csv'):
+def convert_csv_to_geojson(path_to_csv_file='aneesh_data.csv'):
     """
     This function converts a csv file to a geojson format
     :param path_to_csv_file: the path to the csv provided by aneesh analysis
@@ -59,5 +59,5 @@ def convert_csv_to_json(path_to_csv_file='aneesh_data.csv'):
     }
 
     # saving it as geojson.json
-    with open('geojson.json', 'w') as outfile:
+    with open('horizon.geojson', 'w') as outfile:
         json.dump(entire_json_dict, outfile)
