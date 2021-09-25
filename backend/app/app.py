@@ -2,6 +2,7 @@ import pandas as pd
 from flask import Flask, jsonify
 import json
 app = Flask(__name__)
+from csv_to_geojson_converter import convert_csv_to_geojson
 
 DEBUG=True
 
@@ -10,6 +11,7 @@ SHOW_HORIZON = True
 HOST="localhost"
 PORT="5000"
 PROTOCOL="http"
+MODEL_CSV = "./data/aneesh.csv"
 
 # quick fix
 # Must be a library for handling this
@@ -23,9 +25,23 @@ ENDPOINTS = [f"{PROTOCOL}://{HOST}:{PORT}{route}" for route in ROUTES]
 if DEBUG:
 	print(ENDPOINTS)
 
+
+def convert():
+	convert_csv_to_geojson(MODEL_CSV)
+
+
 def get_horizon():
 	"""return a list of predicted failure points in the next seven days"""
-	pass
+	if SHOW_HORIZON:
+		convert()
+		horizon_geojson = "./data/horizon.geojson"
+
+		with open(horizon_geojson, "r") as f:
+			horizon_geojson = json.load(f)
+		return horizon_geojson
+	else:
+		return []
+		
 
 def get_failures():
 	"""return a list dictionaries with failure details"""	
@@ -38,6 +54,7 @@ def get_failures():
 		return failures_json
 	else:
 		return []
+
 
 def render_endpoint_list():
 
