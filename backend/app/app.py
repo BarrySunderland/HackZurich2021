@@ -1,8 +1,13 @@
 import pandas as pd
 from flask import Flask, jsonify
-import json
-app = Flask(__name__)
+from flask_cors import CORS
 from csv_to_geojson_converter import convert_csv_to_geojson
+import json
+
+app = Flask(__name__)
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+
 
 DEBUG=True
 
