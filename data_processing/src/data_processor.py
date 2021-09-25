@@ -1,6 +1,6 @@
 import pandas as pd
 import tqdm
-from src.paths import PATHS
+from paths import PATHS
 import os
 
 
@@ -36,7 +36,7 @@ class DataProcessor:
         result_df = pd.concat(merged_dfs)
         if save:
             result_df.to_csv(DataProcessor.gen_proc_file_name("disruption.csv"))
-        return pd.concat(merged_dfs)
+        return result_df
 
     @staticmethod
     def add_rssi_fields_to_events(save: bool = True):
@@ -69,7 +69,7 @@ class DataProcessor:
         return pd.concat(merged_dfs)
 
     @staticmethod
-    def combine_events(save: bool = True):
+    def combine_events(save: bool = False):
         """This methods combines "A1_TotalTel","A1_ValidTel","A2_RSSI","A2_TotalTel","A2_ValidTel"
         for a day and location based on day and distance.
         """
@@ -105,7 +105,7 @@ class DataProcessor:
         result_df = pd.concat(merged_dfs)
         if save:
             result_df.to_csv(DataProcessor.gen_proc_file_name("rssi.csv"))
-        return pd.concat(merged_dfs)
+        return result_df
 
     @staticmethod
     def make_positional_mapping(save=True):
