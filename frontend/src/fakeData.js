@@ -1,0 +1,56 @@
+export const predicted = [
+  {
+    A1_TotalTel: 57595,
+    A1_ValidTel: 57572,
+    A2_RSSI: 1.58,
+    A2_TotalTel: 57231,
+    A2_ValidTel: 57159,
+    AreaNumber: 9,
+    DateTime: "2020-01-22 00:00:01",
+
+    ID: 100,
+    Latitude: 47.30485483760787,
+    Longitude: 8.049462113532206,
+    fault_probability: 0.050632911392405056,
+  },
+  {
+    A1_TotalTel: 59192,
+    A1_ValidTel: 59169,
+    A2_RSSI: 1.58,
+    A2_TotalTel: 58485,
+    A2_ValidTel: 58371,
+    AreaNumber: 9,
+    DateTime: "2020-01-22 00:00:01",
+    ID: 23,
+
+    Latitude: 47.30485483760787,
+    Longitude: 8.049462113532206,
+    fault_probability: 0.050632911392405056,
+  },
+];
+export const actual = [
+  {
+    A1_TotalTel: 10559,
+    A1_ValidTel: 10559,
+    A2_RSSI: 1.44,
+    A2_TotalTel: 5458,
+    A2_ValidTel: 5426,
+    AreaNumber: 9,
+    DateTime: "2020-01-22 00:00:01",
+    ID: 234,
+    Latitude: 47.30485483760787,
+    Longitude: 8.049462113532206,
+  },
+  {
+    A1_TotalTel: 10559,
+    A1_ValidTel: 10559,
+    A2_RSSI: 1.44,
+    A2_TotalTel: 5458,
+    A2_ValidTel: 5426,
+    AreaNumber: 9,
+    DateTime: "2020-01-22 00:00:01",
+    ID: 3524,
+    Latitude: 47.30485483760787,
+    Longitude: 8.049462113532206,
+  },
+];
