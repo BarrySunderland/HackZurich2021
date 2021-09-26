@@ -22,4 +22,4 @@ This is a working react app that displays the data from the api
 
 This is the way you can select and pick the date
 
-![alt text](https://i.ibb.co/7WLPb2Q/Screenshot-2021-09-26-at-08-56-02.png)
+![alt text](https://i.ibb.co/9yRq8bX/Screenshot-2021-09-26-at-09-01-12.png)
