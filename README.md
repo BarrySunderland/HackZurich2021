@@ -24,6 +24,9 @@ python data_processing/src/data_processor.py
 
 # Model training and evaluation
 
+Notebook explaining modelling is located in ``modelling/notebook/Modelling.ipynb``
+
+The script for training the models.
 ```
 python modelling/train_model.py
 ```
