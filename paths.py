@@ -7,3 +7,4 @@ class PATHS:
     events = os.path.join(base_path, "data","raw","events.csv")
     disruption =  os.path.join(base_path, "data","raw","disruptions.csv")
     data = os.path.join(base_path, "data")
+    model =os.path.join(base_path,"data", "model")
