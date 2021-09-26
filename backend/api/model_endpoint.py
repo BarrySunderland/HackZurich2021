@@ -24,6 +24,18 @@ def get_location(position):
         "position": int(position),
     }
 
+class SimulateDisruptions(Resource):
+    def get(self):
+        date = '2021-06-10'
+        response = []
+        for pos in np.random.randint(197,420,2):
+            params = {"position": pos, "date":date}
+            print("Making historical data request")
+            history = requests.get(url=BASE_URL + "/api/historical", params=params).json()
+            location = get_location(pos)
+            response.append({**history, **location, {"description": "PLACE HOLDER EVENT"}})
+       
+        return {"events":response}, 200
 class Coordinates(Resource):
     def get(self):
         global location_df
@@ -82,12 +94,13 @@ class Prediction(Resource):
                 "confidence": confidence.tolist(),
                 "description": {1: "disruption", 2: "no-disruption"},
             },
-            **coords,
-        }
+            **coords
+        },200
 
 
 api.add_resource(Prediction, "/api/predict")
 api.add_resource(Coordinates, "/api/coordinates")
+api.add_resource(SimulateDisruptions, "/api/disruptions")
 
 if __name__ == "__main__":
     global location_df
