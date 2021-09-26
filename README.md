@@ -32,6 +32,7 @@ python modelling/train_model.py
 ```
 Adjust paths for data_procssing and model training.
 
+The trained models are on [Google Drive](https://drive.google.com/drive/folders/10-IcnhSjROQECzbjdcX_MF4qwBmsPgsX?usp=sharing)
 
 
 
