@@ -18,8 +18,8 @@ You will also see any lint errors in the console.
 
 This is a working react app that displays the data from the api
 
-![alt text](https://ibb.co/qgCRDBw)
+![alt text](https://i.ibb.co/bvFr61n/Screenshot-2021-09-26-at-08-55-50.png)
 
 This is the way you can select and pick the date
 
-![alt text](https://ibb.co/qgCRDBw)
+![alt text](https://i.ibb.co/7WLPb2Q/Screenshot-2021-09-26-at-08-56-02.png)
