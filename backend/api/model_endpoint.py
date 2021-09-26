@@ -33,7 +33,7 @@ class SimulateDisruptions(Resource):
             print("Making historical data request")
             history = requests.get(url=BASE_URL + "/api/historical", params=params).json()
             location = get_location(pos)
-            response.append({**history, **location, {"description": "PLACE HOLDER EVENT"}})
+            response.append({**history, **location, **{"description": "PLACE HOLDER EVENT"}})
        
         return {"events":response}, 200
 class Coordinates(Resource):
@@ -57,7 +57,6 @@ class Coordinates(Resource):
 
 class Prediction(Resource):
     def __init__(self):
-        # TODO; Load models.
         models = []
         for d in range(1, 14):
             model_path = os.path.join(PATHS.model, f"lgb_model_d{d}.txt")
