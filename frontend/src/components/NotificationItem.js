@@ -1,6 +1,11 @@
 import React from "react";
 import "../App.css";
-export default function NotificationItem({ title, onZoom, onChartOpen }) {
+export default function NotificationItem({
+  title,
+  onZoom,
+  onChartOpen,
+  color,
+}) {
   return (
     <div
       className="item-shadow"
@@ -18,7 +23,7 @@ export default function NotificationItem({ title, onZoom, onChartOpen }) {
       }}
       onClick={onZoom}
     >
-      <span class="dot"></span>
+      <span className="dot" style={{ backgroundColor: color }}></span>
       <span style={{ fontSize: 15, marginLeft: 15 }}>{title}</span>
       <span
         style={{ fontSize: 15, marginLeft: 15, color: "grey" }}

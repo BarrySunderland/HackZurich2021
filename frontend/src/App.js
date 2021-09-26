@@ -23,7 +23,7 @@ function App() {
   const [predictedFailures, setPredictedFailures] = useState([]);
   const [startDate, setStartDate] = useState(DEFAULT_DATE);
   const [zoom, setZoom] = useState(10);
-  const [chart, setChart] = useState(false);
+  const [chart, setChart] = useState(true);
   const [center, setCenter] = useState(DEFAULT_CENTER);
   let i = 0;
 

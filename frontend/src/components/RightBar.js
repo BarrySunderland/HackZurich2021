@@ -18,6 +18,7 @@ export default function TopBar({
       {actualFailures.map((failure, i) => (
         <NotificationItem
           key={i}
+          color="red"
           title={failure.name}
           onChartOpen={onChartOpen}
           onZoom={() => {
@@ -28,6 +29,7 @@ export default function TopBar({
       {predictedFailures.map((failure, i) => (
         <NotificationItem
           key={i}
+          color="orange"
           title={failure.name}
           onZoom={() => {
             onZoom(failure.Latitude, failure.Longitude);
