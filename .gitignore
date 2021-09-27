@@ -135,3 +135,6 @@ data/model/lgb_model_d*.txt
 
 #custom 
 frontend/node_modules
+
+#mac stuff
+.DS_Store
