@@ -9,7 +9,7 @@ To install the plugin you need to:
 - install the tool pb_tool with pip3 install pb_tool
 - then run pb_tool deploy
 
-![QGIS screen shot](.horizonDataView.png)
+![QGIS screen shot](https://github.com/BarrySunderland/HackZurich2021/raw/QGIS_extension/predictive_maintenance/horizonDataView.png)
 
 This will compile a fresh version of the plugin into your qgis system. If you would like to continue to work with this app then each time you make a change your want to deploy you should run 
 - pb_tool clean
