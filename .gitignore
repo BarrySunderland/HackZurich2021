@@ -1,4 +1,8 @@
 **/*.csv
+data/
+siemens_env/
+viz_venv/
+viz_env/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
