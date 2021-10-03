@@ -10,7 +10,9 @@ import plotly.graph_objects as go
 import pandas as pd
 import sqlite3
 from time import time
+import json
 
+# https://dash.plotly.com/interactive-graphing for update on hover example
 
 def get_conn(db_name="rssi"):
     
@@ -56,8 +58,6 @@ value_options = [{"label":v,"value":v} for v in value_options]
 position_min = 322
 position_max = 428
 position_current = position_min
-# min PositionNoLeap in database table is 322075
-# min PositionNoLeap in database table is 428066
 df_raw = get_raw_sensor_data(position_current*1000)
 
 @app.callback(
@@ -160,13 +160,17 @@ def update_subplots(df):
 
 def map_plot():
 
-    fpath = "../../data/processed/location.csv"
-    df_loc = pd.read_csv(fpath)
+    with open("../.env.mapboxtoken", "r") as f:
+        mapbox_token = f.read()
+
+    fpath = "../../data/processed/location_sorted.csv"
+    df = pd.read_csv(fpath)
+    df['text'] = ('position : ' + df['Position_m'].astype(str)) + ' km'
 
     fig = go.Figure(data=go.Scattergeo(
-            lon = df_loc['Longitude'],
-            lat = df_loc['Latitude'],
-            text = df_loc['Position_m'],
+            lon = df['Longitude'],
+            lat = df['Latitude'],
+            text = df['text'],
             mode = 'markers',
             marker = dict(
                 size = 8,
@@ -176,20 +180,35 @@ def map_plot():
                 colorscale = 'Blues',
             )))
     fig.update_geos(fitbounds="locations")
-    fig.update_layout(
-    title = 'Map View',
+    fig = px.scatter_mapbox(df, lat="Latitude", lon="Longitude", hover_data=["text",])
+    fig.update_layout(autosize=True,
+        hovermode='closest',
+        mapbox=dict(
+            accesstoken=mapbox_token,
+            bearing=0,
+            pitch=0,
+            zoom=9.5,
+        ),
+        width=500,
+        title = 'Map View',
     )
-
     return fig
+
+@app.callback(
+    Output('click-info-output', 'children'),
+    Input('map-plot', 'clickData')
+)
+def display_clicked_content(value_click):
+   
+    return json.dumps(value_click, indent=2)
+
+
 
 fig_subplots = update_subplots(df_raw)
 
 app.layout = html.Div(children=[
-
     dcc.Store(id='position-store'),
-
     html.H1(children='Siemens Track Debugger'),
-
     html.Div(id="subtitle", 
         children='''Dash: A web application framework for your data.'''
     ),
@@ -214,7 +233,8 @@ app.layout = html.Div(children=[
         value="A2_RSSI"
     ),
     dcc.Graph(id="multi", figure=fig_subplots),
-    dcc.Graph(id="map-plot", figure=map_plot())
+    dcc.Graph(id="map-plot", figure=map_plot()), 
+    html.Div(id="click-info-output", children=[])
 ])
 
 if __name__ == '__main__':
