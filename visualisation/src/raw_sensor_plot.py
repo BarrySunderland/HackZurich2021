@@ -35,7 +35,7 @@ def get_raw_sensor_data(position_start=None,
     qry = f"""
     SELECT DateTime, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
     FROM rssi
-    WHERE PositionNoLeap > {position_start} AND PositionNoLeap <{position_end}
+    WHERE PositionNoLeap > {position_start} AND PositionNoLeap < {position_end}
     LIMIT 10000;"""
     print(qry)
     con = get_conn(db_name="rssi")
@@ -68,18 +68,30 @@ df_raw = get_raw_sensor_data(position_current*1000)
 def update_plot_2(selected_data_type, position_current):
     print("data_type_dropdown, position_slider", selected_data_type, position_current)
     df = get_raw_sensor_data(position_current*1000)
-    print(df.head())
+    # print(df.head())
+    if selected_data_type in ["A1_TotalTel", "A2_TotalTel", "A1_ValidTel","A2_ValidTel",]:
+        log_y_axis = True
+        y_axis_title = selected_data_type + " (log)"
+    else:
+        log_y_axis = False
+        y_axis_title = selected_data_type
+
     fig = px.scatter(df,
                     x="PositionNoLeap", 
                     y=selected_data_type,
+                    # color=selected_data_type,
+                    # color_continuous_scale="Bluered_r",
                     opacity=0.5,
                     hover_name=selected_data_type, 
                     hover_data=["DateTime", "Latitude", "Longitude"],
-                    height=300,)
+                    height=300,
+                    log_y=log_y_axis)
+    fig.update_yaxes(title_text=y_axis_title)
     fig.update_xaxes(title_text="PositionNoLeap (km)")
     fig.update_layout(transition_duration=200)
 
     return fig
+
 
 @app.callback(
     Output('position-text', 'children'),
@@ -104,26 +116,23 @@ def update_subplots(df):
     )
     fig.add_trace(
         go.Scattergl(
-            x=[37.4,37.4],
+            x=[322.4,322.4],
             y=[0,3],
             mode="lines",
             text="Actual Failure",
-            line = dict(color='red', width=10),
-            marker_color='rgba(255, 0, 0, .2)',
-            marker_size=5,
+            line = dict(color='red', width=8),
             textposition="bottom center"
         ),
         row=1, col=1
     )
     fig.add_trace(
         go.Scattergl(
-            x=[40.7,40.7],
-            y=[0,1],
+            x=[322.8,322.8],
+            y=[0,3],
             mode="lines",
             text="Predicted Failure",
+            line = dict(color='yellow', width=8),
             textposition="bottom center",
-            marker_color='rgba(255, 255, 0, .6)',
-            marker_size=2,
         ),
         row=1, col=1
     )
@@ -146,6 +155,30 @@ def update_subplots(df):
     fig.update_layout(height=600,
                     title_text="Stacked Subplots with Shared X-Axes")
     fig.update_xaxes(title_text="PositionNoLeap (km)")
+
+    return fig
+
+def map_plot():
+
+    fpath = "../../data/processed/location.csv"
+    df_loc = pd.read_csv(fpath)
+
+    fig = go.Figure(data=go.Scattergeo(
+            lon = df_loc['Longitude'],
+            lat = df_loc['Latitude'],
+            text = df_loc['Position_m'],
+            mode = 'markers',
+            marker = dict(
+                size = 8,
+                opacity = 0.8,
+                autocolorscale = False,
+                symbol = 'circle',
+                colorscale = 'Blues',
+            )))
+    fig.update_geos(fitbounds="locations")
+    fig.update_layout(
+    title = 'Map View',
+    )
 
     return fig
 
@@ -180,7 +213,8 @@ app.layout = html.Div(children=[
         options=value_options,
         value="A2_RSSI"
     ),
-    dcc.Graph(id="multi", figure=fig_subplots)
+    dcc.Graph(id="multi", figure=fig_subplots),
+    dcc.Graph(id="map-plot", figure=map_plot())
 ])
 
 if __name__ == '__main__':
