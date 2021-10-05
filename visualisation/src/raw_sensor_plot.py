@@ -2,6 +2,7 @@ import dash
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output, State
+import dash_bootstrap_components as dbc
 
 import plotly.express as px
 from plotly.subplots import make_subplots
@@ -37,19 +38,20 @@ def get_raw_sensor_data(position_start=None,
     qry = f"""
     SELECT DateTime, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
     FROM rssi
-    WHERE PositionNoLeap > {position_start} AND PositionNoLeap < {position_end}
+    WHERE PositionNoLeap > :position_start AND 
+          PositionNoLeap < :position_end
     LIMIT 10000;"""
     print(qry)
     con = get_conn(db_name="rssi")
-    df = pd.read_sql(qry, con)
+    df = pd.read_sql(qry, con, params={"position_start":position_start,"position_end":position_end})
     df["DateTime"] = pd.to_datetime(df["DateTime"])
+    df["DateTimeInt"] = df["DateTime"].astype(int)
     df["PositionNoLeap"] = df["PositionNoLeap"]  / 1000
     return df
 
 
-app = dash.Dash(__name__)
+app = dash.Dash("ZSL Zen - sensor data", external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-con = get_conn(db_name="rssi")
 
 
 value_options = ["A1_TotalTel", "A1_ValidTel", "A2_RSSI", "A2_TotalTel", "A2_ValidTel"]
@@ -98,7 +100,7 @@ def update_plot_2(selected_data_type, position_current):
     Input('position-slider', 'value')
 )
 def update_position_text(val):
-    return f"""current position: {val} kms (move using left & right key arrows"""
+    return f"""current position: {val} kms (adjust with arrows keys when active)"""
 
 
 def update_subplots(df):
@@ -109,9 +111,28 @@ def update_subplots(df):
     fig.add_trace(go.Scattergl(
                     x=df["PositionNoLeap"], 
                     y=df["A2_RSSI"],
-                    mode='lines+markers',
+                    mode='markers',
+                    name="A2_RSSI",
                   ),
                 row=1, 
+                col=1
+    )
+    fig.add_trace(go.Scattergl(
+                    x=df["PositionNoLeap"], 
+                    y=df["A2_TotalTel"],
+                    mode='markers',
+                    name='A2_TotalTel',
+                  ),
+                row=2, 
+                col=1
+    )
+    fig.add_trace(go.Scattergl(
+                    x=df["PositionNoLeap"], 
+                    y=df["A2_ValidTel"],
+                    mode='markers',
+                    name="A2_ValidTel",
+                  ),
+                row=3, 
                 col=1
     )
     fig.add_trace(
@@ -119,6 +140,7 @@ def update_subplots(df):
             x=[322.4,322.4],
             y=[0,3],
             mode="lines",
+            name="Actual Failure",
             text="Actual Failure",
             line = dict(color='red', width=8),
             textposition="bottom center"
@@ -130,27 +152,12 @@ def update_subplots(df):
             x=[322.8,322.8],
             y=[0,3],
             mode="lines",
+            name="Predicted Failure",
             text="Predicted Failure",
             line = dict(color='yellow', width=8),
             textposition="bottom center",
         ),
         row=1, col=1
-    )
-    fig.add_trace(go.Scattergl(
-                    x=df["PositionNoLeap"], 
-                    y=df["A2_TotalTel"],
-                    mode='markers',
-                  ),
-                row=2, 
-                col=1
-    )
-    fig.add_trace(go.Scattergl(
-                    x=df["PositionNoLeap"], 
-                    y=df["A2_ValidTel"],
-                    mode='markers',
-                  ),
-                row=3, 
-                col=1
     )
     fig.update_layout(height=600,
                     title_text="Stacked Subplots with Shared X-Axes")
@@ -196,27 +203,43 @@ def map_plot():
 
 @app.callback(
     Output('click-info-output', 'children'),
-    Input('map-plot', 'clickData')
+    Input('map-plot', 'clickData'),
+    Input('map-plot', 'hoverData')
 )
-def display_clicked_content(value_click):
-   
+def display_clicked_content(value_click,value_hover):
+    print(value_hover)
     return json.dumps(value_click, indent=2)
+
+@app.callback(
+    Output("daterange-picker-title","children"),
+    [Input('daterange-picker','start_date'),
+    Input('daterange-picker','end_date'),
+    ]
+)
+def update_date_range_filter(start_date, end_date):
+    print("dates: ", start_date, end_date)
+
+    return start_date, end_date
 
 
 
 fig_subplots = update_subplots(df_raw)
 
-app.layout = html.Div(children=[
+app.layout = html.Div(style={"margin":"15px"}, children=[
     dcc.Store(id='position-store'),
-    html.H1(children='Siemens Track Debugger'),
-    html.Div(id="subtitle", 
-        children='''Dash: A web application framework for your data.'''
-    ),
+
+    
+    html.H1(children=[html.Img(src="./assets/zsl_zen_logo.png",),'Siemens Track Debugger', ], style={"margin":0}),
+    # html.Div(id="subtitle", children='''Dash: A web application framework for your data.'''),
     dcc.Graph(
         id='graph-raw-sensor-data'
     ),
-    
-    html.Div(id="line", children="---------------------------------"),
+    html.Label(children="select data type to display", htmlFor="data_type_dropdown"),
+    dcc.Dropdown(
+        id="data_type_dropdown",
+        options=value_options,
+        value="A2_RSSI",
+    ),
     html.Div(id="position-container", children=[
         html.Div(id="position-text", children="", style={"align-content":"center"}),
         dcc.Slider(
@@ -227,11 +250,14 @@ app.layout = html.Div(children=[
             value=position_current,
         )
     ]),
-    dcc.Dropdown(
-        id="data_type_dropdown",
-        options=value_options,
-        value="A2_RSSI"
-    ),
+    html.Div(id="daterange-picker-container", children=[
+        html.Div(id="daterange-picker-title", children=[]),
+        dcc.DatePickerRange(
+            id="daterange-picker",
+            updatemode="singledate",
+            display_format="DD-MMM-YY"),
+    ]),
+
     dcc.Graph(id="multi", figure=fig_subplots),
     dcc.Graph(id="map-plot", figure=map_plot()), 
     html.Div(id="click-info-output", children=[])
