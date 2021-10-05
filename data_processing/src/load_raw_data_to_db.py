@@ -34,6 +34,12 @@ def check_csv_file_length(input_fpath):
     
     return total_csv_len
 
+def process_df(df):
+
+    df["DateTimeInt"] = pd.to_datetime(df["DateTime"]).values
+
+    return df
+
 def load_data_to_sql(input_fpath, table_name, con):
     
     
@@ -48,6 +54,7 @@ def load_data_to_sql(input_fpath, table_name, con):
     df_chunks = pd.read_csv(input_fpath, index_col="ID", chunksize=chunksize)
 
     for df in df_chunks:
+        df = process_df(df)
         df.to_sql(table_name, con, if_exists='append')
         progress += df.shape[0]
         percent = progress/total_csv_len
@@ -56,7 +63,7 @@ def load_data_to_sql(input_fpath, table_name, con):
     return
     
 
-if __main__ == '__main__':
+if __name__ == '__main__':
 
     base_path = os.environ.get("BASE_PATH","../../")
     
