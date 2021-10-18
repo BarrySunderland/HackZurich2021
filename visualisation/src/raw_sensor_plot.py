@@ -35,24 +35,51 @@ def get_raw_sensor_data(position_start=None,
     if not position_end:
         position_end = position_start + 1000 
 
+    if date_start:
+        date_start = int(date_start)
+    else:
+        date_start = pd.to_datetime("2021-01-01").value
+    if date_end:
+        date_end = int(date_end)
+    else:
+        date_end = pd.to_datetime("2022-01-01").value
+
     qry = f"""
-    SELECT DateTime, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
+    SELECT DateTime,DateTimeInt, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
+    FROM rssi
+    WHERE PositionNoLeap > :position_start AND 
+          PositionNoLeap < :position_end AND
+          DateTimeInt > :date_start AND
+          DateTimeInt < :date_end
+    LIMIT 100;
+    """
+    qry = f"""
+    SELECT DateTime,DateTimeInt, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
     FROM rssi
     WHERE PositionNoLeap > :position_start AND 
           PositionNoLeap < :position_end
-    LIMIT 10000;"""
-    print(qry)
-    con = get_conn(db_name="rssi")
-    df = pd.read_sql(qry, con, params={"position_start":position_start,"position_end":position_end})
+    LIMIT 100;
+    """
+
+    con = get_conn(db_name="raw")
+    qry_params = {"position_start":position_start,
+                  "position_end":position_end,
+                  "date_start":date_start,
+                  "date_end":date_end,
+                  }
+    df = pd.read_sql(qry, con, params=qry_params)
     df["DateTime"] = pd.to_datetime(df["DateTime"])
-    df["DateTimeInt"] = df["DateTime"].astype(int)
+    df["DateTimeInt"] = pd.to_datetime(df["DateTime"]).astype(int).values
     df["PositionNoLeap"] = df["PositionNoLeap"]  / 1000
+    print(df)
     return df
 
 
-app = dash.Dash("ZSL Zen - sensor data", external_stylesheets=[dbc.themes.BOOTSTRAP])
+dark_mode=False
+TEMPLATE = "plotly_dark" if dark_mode else "plotly"
+stylesheet = dbc.themes.CYBORG if dark_mode else dbc.themes.BOOTSTRAP
 
-
+app = dash.Dash("ZSL Zen - sensor data", external_stylesheets=[stylesheet])
 
 value_options = ["A1_TotalTel", "A1_ValidTel", "A2_RSSI", "A2_TotalTel", "A2_ValidTel"]
 value_options = [{"label":v,"value":v} for v in value_options]
@@ -87,7 +114,8 @@ def update_plot_2(selected_data_type, position_current):
                     hover_name=selected_data_type, 
                     hover_data=["DateTime", "Latitude", "Longitude"],
                     height=300,
-                    log_y=log_y_axis)
+                    log_y=log_y_axis,
+                    template=TEMPLATE)
     fig.update_yaxes(title_text=y_axis_title)
     fig.update_xaxes(title_text="PositionNoLeap (km)")
     fig.update_layout(transition_duration=200)
@@ -104,9 +132,10 @@ def update_position_text(val):
 
 
 def update_subplots(df):
-    fig = make_subplots(rows=4, cols=1,
+    fig = make_subplots(rows=3, cols=1,
                     shared_xaxes=True,
-                    vertical_spacing=0.02)
+                    vertical_spacing=0.02,
+                    )
 
     fig.add_trace(go.Scattergl(
                     x=df["PositionNoLeap"], 
@@ -137,7 +166,7 @@ def update_subplots(df):
     )
     fig.add_trace(
         go.Scattergl(
-            x=[322.4,322.4],
+            x=[322.8,322.8],
             y=[0,3],
             mode="lines",
             name="Actual Failure",
@@ -149,7 +178,7 @@ def update_subplots(df):
     )
     fig.add_trace(
         go.Scattergl(
-            x=[322.8,322.8],
+            x=[322.5,322.5],
             y=[0,3],
             mode="lines",
             name="Predicted Failure",
@@ -159,8 +188,9 @@ def update_subplots(df):
         ),
         row=1, col=1
     )
-    fig.update_layout(height=600,
-                    title_text="Stacked Subplots with Shared X-Axes")
+    fig.update_layout(height=500,
+                    title_text="Stacked Subplots with Shared X-Axes",
+                    template=TEMPLATE)
     fig.update_xaxes(title_text="PositionNoLeap (km)")
 
     return fig
@@ -198,6 +228,7 @@ def map_plot():
         ),
         width=500,
         title = 'Map View',
+        template=TEMPLATE
     )
     return fig
 
@@ -264,4 +295,4 @@ app.layout = html.Div(style={"margin":"15px"}, children=[
 ])
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, port=8060)
