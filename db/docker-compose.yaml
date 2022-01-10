@@ -1,0 +1,10 @@
+version: '3' 
+services: 
+  db:
+    image: postgres:14
+    env_file:
+      - ./db.env
+    ports:
+      - 5432:5432
+    volumes:
+      - ./startup_scripts:/docker-entrypoint-initdb.d/startup_scripts

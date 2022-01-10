@@ -104,7 +104,7 @@ class DataProcessor:
                 pbar.update(1)
         result_df = pd.concat(merged_dfs)
         if save:
-            result_df.to_csv(DataProcessor.gen_proc_file_name("rssi.csv"))
+            result_df.to_csv(DataProcessor.gen_proc_file_name("rssi_mean.csv"))
         return result_df
 
     @staticmethod
@@ -146,6 +146,7 @@ def main():
     print("1. Adding RSSI values to disruption")
     disruption_path = DataProcessor.gen_proc_file_name("disruption.csv")
     location_path = DataProcessor.gen_proc_file_name("location.csv")
+    rssi_mean_path = DataProcessor.gen_proc_file_name("rssi_mean.csv")
     if not os.path.exists(disruption_path):
         DataProcessor.add_rssi_fields_to_disruptions()
     else:
@@ -156,6 +157,11 @@ def main():
         DataProcessor.make_positional_mapping()
     else:
         print("skipping location processing, file already exists!")
+    
+    if not os.path.exists(rssi_mean_path):
+        DataProcessor.combine_events(save= False)
+    else:
+        print("skipping mean_rssi processing, file already exists!")
 
 
 if __name__ == "__main__":
