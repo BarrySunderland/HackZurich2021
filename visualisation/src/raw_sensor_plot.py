@@ -8,21 +8,36 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
+import os
 import pandas as pd
 import sqlite3
 from time import time
 import json
 
+from sqlalchemy import create_engine, text
 # https://dash.plotly.com/interactive-graphing for update on hover example
 
-def get_conn(db_name="rssi"):
+base_path = os.environ.get("BASE_PATH",".")
+
+# def get_conn(db_name="rssi"):
     
-    sqlite_path = f"../../data/processed/{db_name}.db" 
+#     sqlite_path = f"../../data/processed/{db_name}.db" 
+#     try:
+#         con = sqlite3.connect(sqlite_path)
+#     except Exception as e:
+#         print(f"connection error: {e}")
+    
+#     return con
+
+def get_conn(db_name="sensor"):
+
     try:
-        con = sqlite3.connect(sqlite_path)
+        engine = create_engine(f"postgresql://app:example@localhost:5432/{db_name}")
+        con = engine.connect()
     except Exception as e:
         print(f"connection error: {e}")
-    
+        con=None
+
     return con
 
 
@@ -45,31 +60,35 @@ def get_raw_sensor_data(position_start=None,
         date_end = pd.to_datetime("2022-01-01").value
 
     qry = f"""
-    SELECT DateTime,DateTimeInt, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
+    SELECT DateTime, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
     FROM rssi
-    WHERE PositionNoLeap > :position_start AND 
-          PositionNoLeap < :position_end AND
-          DateTimeInt > :date_start AND
-          DateTimeInt < :date_end
+    WHERE PositionNoLeap > %(position_start)s AND 
+          PositionNoLeap < %position_end)s AND
+          DateTime > %(date_start)s AND
+          DateTime < %(date_end)s
     LIMIT 100;
     """
     qry = f"""
-    SELECT DateTime,DateTimeInt, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
+    SELECT *
     FROM rssi
-    WHERE PositionNoLeap > :position_start AND 
-          PositionNoLeap < :position_end
-    LIMIT 100;
+    WHERE 'PositionNoLeap' > %(position_start)s AND 
+          'PositionNoLeap' < %(position_end)s
+    LIMIT 10000;
     """
+    # SELECT 'DateTime', 'PositionNoLeap', 'Latitude', 'Longitude', 'A1_TotalTel', 'A1_ValidTel', 'A2_RSSI', 'A2_TotalTel', 'A2_ValidTel'
+    # WHERE 'PositionNoLeap' > %(position_start)s AND 
+    #       'PositionNoLeap' < %(position_end)s
 
-    con = get_conn(db_name="raw")
-    qry_params = {"position_start":position_start,
-                  "position_end":position_end,
+    con = get_conn(db_name="sensor")
+    qry_params = {"position_start":str(position_start),
+                  "position_end":str(position_end),
                   "date_start":date_start,
                   "date_end":date_end,
                   }
     df = pd.read_sql(qry, con, params=qry_params)
+    print("\nreturned df: \n", df.head())
     df["DateTime"] = pd.to_datetime(df["DateTime"])
-    df["DateTimeInt"] = pd.to_datetime(df["DateTime"]).astype(int).values
+    # df["DateTimeInt"] = pd.to_datetime(df["DateTime"]).astype(int).values
     df["PositionNoLeap"] = df["PositionNoLeap"]  / 1000
     print(df)
     return df
@@ -197,10 +216,10 @@ def update_subplots(df):
 
 def map_plot():
 
-    with open("../.env.mapboxtoken", "r") as f:
+    with open(os.path.join(base_path,"visualisation",".env.mapboxtoken"), "r") as f:
         mapbox_token = f.read()
 
-    fpath = "../../data/processed/location_sorted.csv"
+    fpath = os.path.join(base_path, "data/processed/location_sorted.csv")
     df = pd.read_csv(fpath)
     df['text'] = ('position : ' + df['Position_m'].astype(str)) + ' km'
 
