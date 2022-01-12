@@ -46,9 +46,10 @@ def check_csv_file_length(input_fpath):
 
 def process_df(df):
 
-    df["DateTimeInt"] = pd.to_datetime(df["DateTime"]).values
+    # df["DateTimeInt"] = pd.to_datetime(df["DateTime"]).values
     # df = df.rename(columns={"ID":"id"})
     return df
+
 
 def load_data_to_sql(input_fpath, table_name, con):
     
