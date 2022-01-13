@@ -55,11 +55,12 @@ def get_raw_sensor_data(position_start=None,
         date_start = str(date_start)
         date_end = str(date_end)
 
+        #  DateTime, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
         qry = f"""
-        SELECT DateTime, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
+        SELECT *
         FROM rssi
         WHERE "PositionNoLeap" > %(position_start)s AND 
-            "PositionNoLeap" < %position_end)s AND
+            "PositionNoLeap" < %(position_end)s AND
             "DateTime" > %(date_start)s AND
             "DateTime" < %(date_end)s
         LIMIT 100;
@@ -121,12 +122,18 @@ df_raw = get_raw_sensor_data(position_start=position_current)
 @app.callback(
     Output(component_id="graph-raw-sensor-data", component_property="figure"),
     Input(component_id="data_type_dropdown", component_property="value"),
-    Input('position-slider', 'value')
+    Input('position-slider', 'value'),
+    Input('daterange-picker','start_date'),
+    Input('daterange-picker','end_date'),
 )
-def update_plot_2(selected_data_type, position_current):
+def update_plot_2(selected_data_type, position_current, date_start, date_end):
     print("data_type_dropdown, position_slider", selected_data_type, position_current)
-    df = get_raw_sensor_data(position_start=position_current)
-    max_y_val = df[selected_data_type].max()
+    df = get_raw_sensor_data(position_start=position_current,
+                            date_start=date_start,
+                            date_end=date_end
+                            )
+    max_y_val = df[selected_data_type].max() 
+    max_y_val = 1.05*max_y_val
     # print(df.head())
     if selected_data_type in ["A1_TotalTel", "A2_TotalTel", "A1_ValidTel","A2_ValidTel",]:
         log_y_axis = True
