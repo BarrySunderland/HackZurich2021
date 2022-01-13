@@ -48,43 +48,53 @@ def get_raw_sensor_data(position_start=None,
     
     print(f"getting raw sensor data for {position_start}")
     if not position_end:
-        position_end = position_start + 1000 
+        position_end = position_start + 500 
 
-    if date_start:
-        date_start = int(date_start)
-    else:
-        date_start = pd.to_datetime("2021-01-01").value
-    if date_end:
-        date_end = int(date_end)
-    else:
-        date_end = pd.to_datetime("2022-01-01").value
+    if date_start and date_end:
+        print("date_start, date_end: ", date_start, date_end )
+        date_start = str(date_start)
+        date_end = str(date_end)
 
-    qry = f"""
-    SELECT DateTime, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
-    FROM rssi
-    WHERE PositionNoLeap > %(position_start)s AND 
-          PositionNoLeap < %position_end)s AND
-          DateTime > %(date_start)s AND
-          DateTime < %(date_end)s
-    LIMIT 100;
-    """
-    qry = f"""
-    SELECT *
-    FROM rssi
-    WHERE 'PositionNoLeap' > %(position_start)s AND 
-          'PositionNoLeap' < %(position_end)s
-    LIMIT 10000;
-    """
+        qry = f"""
+        SELECT DateTime, PositionNoLeap, Latitude, Longitude, A1_TotalTel, A1_ValidTel, A2_RSSI, A2_TotalTel, A2_ValidTel
+        FROM rssi
+        WHERE "PositionNoLeap" > %(position_start)s AND 
+            "PositionNoLeap" < %position_end)s AND
+            "DateTime" > %(date_start)s AND
+            "DateTime" < %(date_end)s
+        LIMIT 100;
+        """
+    else:
+        qry = f"""
+        SELECT *
+        FROM rssi
+        WHERE "PositionNoLeap" > %(position_start)s AND 
+            "PositionNoLeap" < %(position_end)s
+        LIMIT 10000;
+        """
+    # qry = f"""
+    # SELECT *
+    # FROM rssi
+    # WHERE "PositionNoLeap" > %(position_start)s AND 
+    #       "PositionNoLeap" < %(position_end)s AND
+    #       "DateTime" > '2021-06-17' AND 
+    #       "DateTime" < '2021-06-31'
+    # LIMIT 10000;
+    # """
     # SELECT 'DateTime', 'PositionNoLeap', 'Latitude', 'Longitude', 'A1_TotalTel', 'A1_ValidTel', 'A2_RSSI', 'A2_TotalTel', 'A2_ValidTel'
-    # WHERE 'PositionNoLeap' > %(position_start)s AND 
-    #       'PositionNoLeap' < %(position_end)s
+    # WHERE "DateTime" > '%(date_start)s' AND 
+    #       "DateTime" < '%(date_end)s'
+
+    #       "DateTime" > '%(date_start)s' AND 
+    #       "DateTime" < '%(date_end)s'
 
     con = get_conn(db_name="sensor")
-    qry_params = {"position_start":str(position_start),
-                  "position_end":str(position_end),
+    qry_params = {"position_start":int(position_start),
+                  "position_end":int(position_end),
                   "date_start":date_start,
                   "date_end":date_end,
                   }
+    # qry_params = {}
     df = pd.read_sql(qry, con, params=qry_params)
     print("\nreturned df: \n", df.head())
     df["DateTime"] = pd.to_datetime(df["DateTime"])
@@ -103,10 +113,10 @@ app = dash.Dash("ZSL Zen - sensor data", external_stylesheets=[stylesheet])
 value_options = ["A1_TotalTel", "A1_ValidTel", "A2_RSSI", "A2_TotalTel", "A2_ValidTel"]
 value_options = [{"label":v,"value":v} for v in value_options]
 
-position_min = 322
-position_max = 428
+position_min = 97060
+position_max = 428066
 position_current = position_min
-df_raw = get_raw_sensor_data(position_current*1000)
+df_raw = get_raw_sensor_data(position_start=position_current)
 
 @app.callback(
     Output(component_id="graph-raw-sensor-data", component_property="figure"),
@@ -115,7 +125,8 @@ df_raw = get_raw_sensor_data(position_current*1000)
 )
 def update_plot_2(selected_data_type, position_current):
     print("data_type_dropdown, position_slider", selected_data_type, position_current)
-    df = get_raw_sensor_data(position_current*1000)
+    df = get_raw_sensor_data(position_start=position_current)
+    max_y_val = df[selected_data_type].max()
     # print(df.head())
     if selected_data_type in ["A1_TotalTel", "A2_TotalTel", "A1_ValidTel","A2_ValidTel",]:
         log_y_axis = True
@@ -135,7 +146,7 @@ def update_plot_2(selected_data_type, position_current):
                     height=300,
                     log_y=log_y_axis,
                     template=TEMPLATE)
-    fig.update_yaxes(title_text=y_axis_title)
+    fig.update_yaxes(title_text=y_axis_title, range=[0, max_y_val])
     fig.update_xaxes(title_text="PositionNoLeap (km)")
     fig.update_layout(transition_duration=200)
 
@@ -296,7 +307,7 @@ app.layout = html.Div(style={"margin":"15px"}, children=[
             id='position-slider',
             min=position_min,
             max=position_max,
-            step=1,
+            step=500,
             value=position_current,
         )
     ]),
@@ -307,6 +318,8 @@ app.layout = html.Div(style={"margin":"15px"}, children=[
             updatemode="singledate",
             display_format="DD-MMM-YY"),
     ]),
+    # max 2021-06-25
+    # min 2020-01-22
 
     dcc.Graph(id="multi", figure=fig_subplots),
     dcc.Graph(id="map-plot", figure=map_plot()), 
