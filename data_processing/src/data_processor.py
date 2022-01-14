@@ -157,9 +157,9 @@ def main():
         DataProcessor.make_positional_mapping()
     else:
         print("skipping location processing, file already exists!")
-    
+    print("3. Processing mean_rssi values")
     if not os.path.exists(rssi_mean_path):
-        DataProcessor.combine_events(save= False)
+        DataProcessor.combine_events(save= True)
     else:
         print("skipping mean_rssi processing, file already exists!")
 
