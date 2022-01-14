@@ -46,9 +46,10 @@ def get_raw_sensor_data(position_start=None,
                         date_start=None,
                         date_end=None):
     
+    position_start = position_start*10
     print(f"getting raw sensor data for {position_start}")
     if not position_end:
-        position_end = position_start + 500 
+        position_end = position_start + 100
 
     if date_start and date_end:
         print("date_start, date_end: ", date_start, date_end )
@@ -63,7 +64,7 @@ def get_raw_sensor_data(position_start=None,
             "PositionNoLeap" < %(position_end)s AND
             "DateTime" > %(date_start)s AND
             "DateTime" < %(date_end)s
-        LIMIT 100;
+        LIMIT 1000;
         """
     else:
         qry = f"""
@@ -71,7 +72,7 @@ def get_raw_sensor_data(position_start=None,
         FROM rssi
         WHERE "PositionNoLeap" > %(position_start)s AND 
             "PositionNoLeap" < %(position_end)s
-        LIMIT 10000;
+        LIMIT 1000;
         """
     # qry = f"""
     # SELECT *
@@ -97,11 +98,11 @@ def get_raw_sensor_data(position_start=None,
                   }
     # qry_params = {}
     df = pd.read_sql(qry, con, params=qry_params)
-    print("\nreturned df: \n", df.head())
+    
     df["DateTime"] = pd.to_datetime(df["DateTime"])
-    # df["DateTimeInt"] = pd.to_datetime(df["DateTime"]).astype(int).values
-    df["PositionNoLeap"] = df["PositionNoLeap"]  / 1000
-    print(df)
+    df["PositionNoLeap"] = df["PositionNoLeap"]  / 10
+    
+    print(f"query returned: {df.shape[0]} rows")
     return df
 
 
@@ -114,8 +115,11 @@ app = dash.Dash("ZSL Zen - sensor data", external_stylesheets=[stylesheet])
 value_options = ["A1_TotalTel", "A1_ValidTel", "A2_RSSI", "A2_TotalTel", "A2_ValidTel"]
 value_options = [{"label":v,"value":v} for v in value_options]
 
-position_min = 97060
-position_max = 428066
+# position_min = 97060
+# position_max = 428066
+#position in metres
+position_min = 9706
+position_max = 42807
 position_current = position_min
 df_raw = get_raw_sensor_data(position_start=position_current)
 
@@ -154,7 +158,7 @@ def update_plot_2(selected_data_type, position_current, date_start, date_end):
                     log_y=log_y_axis,
                     template=TEMPLATE)
     fig.update_yaxes(title_text=y_axis_title, range=[0, max_y_val])
-    fig.update_xaxes(title_text="PositionNoLeap (km)")
+    fig.update_xaxes(title_text="PositionNoLeap (m)")
     fig.update_layout(transition_duration=200)
 
     return fig
@@ -165,7 +169,7 @@ def update_plot_2(selected_data_type, position_current, date_start, date_end):
     Input('position-slider', 'value')
 )
 def update_position_text(val):
-    return f"""current position: {val} kms (adjust with arrows keys when active)"""
+    return f"""current position: {val} m (adjust with arrows keys when active)"""
 
 
 def update_subplots(df):
@@ -239,6 +243,7 @@ def map_plot():
 
     fpath = os.path.join(base_path, "data/processed/location_sorted.csv")
     df = pd.read_csv(fpath)
+    df['Position_m'] = df['Position_m'] / 10
     df['text'] = ('position : ' + df['Position_m'].astype(str)) + ' km'
 
     fig = go.Figure(data=go.Scattergeo(
@@ -269,14 +274,36 @@ def map_plot():
     )
     return fig
 
-@app.callback(
+# @app.callback([
+#     Output('click-info-output', 'children'),
+#     Input('click-info-output', 'href'),]
+# )
+# def update_click_info_children(href):
+#     print("href:", href)
+#     return [href,]
+
+@app.callback([
     Output('click-info-output', 'children'),
+    Output('click-info-output', 'href'),
     Input('map-plot', 'clickData'),
-    Input('map-plot', 'hoverData')
+    Input('map-plot', 'hoverData'),
+    ]
 )
 def display_clicked_content(value_click,value_hover):
-    print(value_hover)
-    return json.dumps(value_click, indent=2)
+    # print(value_hover)
+    if value_click==None:
+        return ["",], ""
+    points = value_click.get("points")
+    d = {}
+    if points:
+        lat = points[0]["lat"]
+        lon = points[0]["lon"]
+        d["lat"] = lat
+        d["lon"] = lon
+        d["url"] = f"https://earth.google.com/web/search/{lat},{lon}"
+    print("url: ", d["url"])
+    return [d["url"],], d["url"]
+    # return json.dumps(d, indent=2)
 
 @app.callback(
     Output("daterange-picker-title","children"),
@@ -314,7 +341,7 @@ app.layout = html.Div(style={"margin":"15px"}, children=[
             id='position-slider',
             min=position_min,
             max=position_max,
-            step=500,
+            step=10,
             value=position_current,
         )
     ]),
@@ -328,9 +355,9 @@ app.layout = html.Div(style={"margin":"15px"}, children=[
     # max 2021-06-25
     # min 2020-01-22
 
-    dcc.Graph(id="multi", figure=fig_subplots),
+    # dcc.Graph(id="multi", figure=fig_subplots),
     dcc.Graph(id="map-plot", figure=map_plot()), 
-    html.Div(id="click-info-output", children=[])
+    html.A(id="click-info-output", target="_", href="", children=["google earth"])
 ])
 
 if __name__ == '__main__':
